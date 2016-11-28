@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons1.css">
+    <!-- The CSS package above applies Google styling to buttons and other elements. -->
+
+    <style>
+    .branding-below {
+      bottom: 56px;
+      top: 0;
+    }
+
+    .branding-text {
+      left: 7px;
+      position: relative;
+      top: 3px;
+    }
+
+    .col-contain {
+      overflow: hidden;
+    }
+
+    .col-one {
+      float: left;
+      width: 50%;
+    }
+
+    .logo {
+      vertical-align: middle;
+    }
+
+    .width-100 {
+      width: 100%;
+    }
+    </style>
+  </head>
+  <body>
+    <div class="sidebar branding-below">
+      <div class="block">
+        <b>License Features</b>
+        <div>Your choices on this panel will update the other panels on this page.</div>
+      </div>
+      <div class="block">
+      <form>
+          <b>Allow adaptations of your work to be shared?</b>
+          <div>
+            <input type="radio" name="field_derivatives" id="field_derivatives_y" value="y" checked="checked">
+            <label for="field_derivatives_y">Yes</label>
+          </div>
+          <div>
+            <input type="radio" name="field_derivatives" id="field_derivatives_n" value="n">
+            <label for="field_derivatives_n">No</label>
+          </div>
+          <div>
+            <input type="radio" name="field_derivatives" id="field_derivatives_sa" value="sa">
+            <label for="field_derivatives_sa">Yes, as long as others share alike </label>
+          </div>
+        </div>
+        <div class="block">
+          <b>Allow commercial uses of your work?</b>
+          <div>
+            <input type="radio" name="field_commercial" id="field_commercial_y" value="y" checked="checked">
+            <label for="field_derivatives_y">Yes</label>
+          </div>
+          <div>
+            <input type="radio" name="field_commercial" id="field_commercial_n" value="n">
+            <label for="field_derivatives_n">No</label>
+          </div>
+        </div>
+
+        <div class="block">
+          <b>Selected License</b>
+          <div id="license">Attribution 4.0 International</div>
+          <div id="license-icon">
+            <a rel='license' target='_blank' href='http://creativecommons.org/licenses/by/4.0/'><img alt='Creative Commons License' style='border-width:0' src='https://i.creativecommons.org/l/by/4.0/88x31.png' /></a>
+          </div>
+        </div>
+
+         <div class="block" id="button-bar">
+           <button class="blue" id="insert-icon">Insert License Information into document</button>
+         </div>
+      </form>
+    </div>
+
+    <div class="sidebar bottom">
+      <span class="gray branding-text">license choice information based on <a href="http://creativecommons.org/choose" target="_blank">creativecommons.org/choose</a></span>
+    </div>
+
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js">
+    </script>
+    <script>
+      // Assign click handlers and
+      // try to load the user's derivatives and commercial preferences if previously set.
+      $(function() {
+        $('input:radio').change(radioChanged);
+        $('#insert-icon').click(insertIcon);
+        google.script.run.withSuccessHandler(loadPreferences)
+            .withFailureHandler(showError).getPreferences();
+      });
+
+      // Callback function that populates derivatives and commercial selection
+      // boxes with user preferences from the server.
+      function loadPreferences(licensePrefs) {
+        $('input:radio[name="field_derivatives"]')
+            .filter('[value=' + languagePrefs.derivatives + ']')
+            .attr('checked', true);
+        $('input:radio[name="field_commercial"]')
+            .filter('[value=' + languagePrefs.commercial + ']')
+            .attr('checked', true);
+      }
+
+      // Runs a server-side function to calculate the selected license
+      // and update the sidebar UI
+      function radioChanged() {
+        $('#insert-icon').disabled = true;
+        $('#error').remove();
+        var derivatives = $('input[name=field_derivatives]:checked').val();
+        var commercial = $('input[name=field_commercial]:checked').val();
+        
+        google.script.run
+          .withSuccessHandler(
+            function(license, element) {
+              $('#license').text(license.name);
+              $('#license-icon').html(
+                "<a rel='license' target='_blank' href='"+license.href+"'><img alt='Creative Commons License' style='border-width:0' src='"+
+                license.icon+"' /></a>"
+              );
+              $('#insert-icon').disabled = false;
+            })
+          .withFailureHandler(
+            function(msg, element) {
+              showError(msg, $('#button-bar'));
+              $('#insert-icon').disabled = false;
+            })
+          .withUserObject(this)
+          .getSelectedLicense(derivatives, commercial);
+      }
+
+      // Runs a server-side function to insert the selected icon into the document at the user's cursor or selection.
+      function insertIcon(e) {
+        e.preventDefault();
+        $('#insert-icon').disabled = true;
+        $('#error').remove();
+        google.script.run
+            .withSuccessHandler(
+              function(returnSuccess, element) {
+                $('#insert-icon').disabled = false;
+              })
+            .withFailureHandler(
+              function(msg, element) {
+                showError(msg, $('#button-bar'));
+                $('#insert-icon').disabled = false;
+              })
+            .withUserObject(this)
+            .insertIcon($('#license').text(), $('#license-icon a').attr('href'), $('#license-icon img').attr('src'));
+      }
+
+      // Inserts a div that contains an error message after a given element.
+      function showError(msg, element) {
+        var div = $('<div id="error" class="error">' + msg + '</div>');
+        $(element).after(div);
+      }
+    </script>
+  </body>
+</html>
