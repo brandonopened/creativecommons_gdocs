@@ -9,4 +9,4 @@ I would love to add but don't quite have the technical knowledge or time too:
 1) Language support
 2) Call the API instead of manually having the licenses in the code.gs file
 3) Machine-readable format for better search capabilities
-If you're interested in helping contribute I'd love to talk! brandon@opened.com 
+If you're interested in helping contribute I'd love to talk! brandon.dorman@gmail.com
